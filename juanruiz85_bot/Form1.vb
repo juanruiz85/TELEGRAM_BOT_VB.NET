@@ -25,103 +25,107 @@ Public Class Form1
 #Region "Proceso principal para funcionamiento del bot"
     Private Async Sub Bot_CheckAsync()
         'Obtenemos los updates del telegram (mensajes nuevos)
-        Dim bot_updates = bot.GetUpdatesAsync(update_id + 1).Result
-        'Comprobamos que haya nuevos mensajes
-        If bot_updates.Length > 0 Then
-            'una vez tenida la cantidad de mensajes empezamos a analizarlos
-            For i = 0 To bot_updates.Length - 1
-                update_id = bot_updates(i).Id
-                'Aqui revisamos si el mensaje recibido es texto o es multimedia
-                'tomamos la informacion y lo ponemos en un listbox para ir sabiendo como se comporta
-                If bot_updates(0).Message.Type.ToString = "TextMessage" Then
-                    'Aqui por debug obtenermos el id y el nombre de usuario de quien envio el mensaje 
-                    SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Text)
-                Else
-                    SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Type.ToString())
-                End If
-                'Comprobamos que el chat sea un grupo para asi separar los mensajes privados de los de grupo
-                If UCase(bot_updates(0).Message.Chat.Type.ToString) = "GROUP" Then
-                    If UCase(bot_updates(0).Message.Text) = "GRUPO" Then
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
-                        Await bot.SendTextMessageAsync(bot_updates(0).Message.Chat.Id, "Hola al grupo " & bot_updates(0).Message.From.FirstName, False, False)
+        Try
+            Dim bot_updates = bot.GetUpdatesAsync(update_id + 1).Result
+            'Comprobamos que haya nuevos mensajes
+            If bot_updates.Length > 0 Then
+                'una vez tenida la cantidad de mensajes empezamos a analizarlos
+                For i = 0 To bot_updates.Length - 1
+                    update_id = bot_updates(i).Id
+                    'Aqui revisamos si el mensaje recibido es texto u otro tipo de mensaje
+                    If bot_updates(0).Message.Type.ToString = "TextMessage" Then
+                        'Aqui por debug obtenermos el id y el nombre de usuario de quien envio el mensaje y lo ponemos en la listbox1
+                        SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Text)
+                    Else
+                        SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Type.ToString())
                     End If
-                Else 'Aqui es donde pondremo los comandos para el chat privado
-                    If UCase(bot_updates(0).Message.Text) = "/START" Then
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Bienvenido " & bot_updates(0).Message.From.FirstName, False, False)
-                    End If
-                    If UCase(bot_updates(0).Message.Text) = "HOLA" Then
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
-                    End If
-                    '======== ENVIAR ARCHIVOS ==============
-                    If UCase(bot_updates(0).Message.Text) = "GIF" Then
-                        Dim documento As New Telegram.Bot.Types.FileToSend
-                        With documento
-                            .Filename = "giphy.mp4"
-                            .Content = IO.File.Open("C:\telegrambot\files\giphy.mp4", FileMode.Open, FileAccess.Read, FileShare.Read)
-                        End With
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.UploadVideo)
-                        Await bot.SendDocumentAsync(bot_updates(0).Message.From.Id, documento)
-                    End If
-                    'Verificamos la ram utilizada y disponible de la computadora donde se esta ejecutando la apliacion
-                    If UCase(bot_updates(0).Message.Text) = "PCRAM" Then
-                        Dim CI As New ComputerInfo()
-                        Dim avl, used As String
-                        Dim mem As ULong = ULong.Parse(CI.AvailablePhysicalMemory.ToString())
-                        Dim mem1 As ULong = ULong.Parse(CI.TotalPhysicalMemory.ToString()) - ULong.Parse(CI.AvailablePhysicalMemory.ToString())
-                        avl = (mem / (1024 * 1024) & " MB").ToString()
-                        used = (mem1 / (1024 * 1024) & " MB").ToString()
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Memoria del sistema en uso " & used & vbCrLf _
-                        & "Disponible " & avl, False, False)
-                        SetText_ListBox2("Memoria del sistema en uso " & used & " de " & avl)
-                    End If
-                    'Aqui verificamos la ram utilizada por la aplicacion unicamente
-                    If UCase(bot_updates(0).Message.Text) = "RAM" Then
-                        x = Process.GetCurrentProcess()
-                        inf = "Memoria Utilizada: " & x.WorkingSet64 / 1024 & " K" & vbCrLf _
-                        & "Memoria paginada: " & x.PagedMemorySize64 / 1024 & " K"
-                        SetText_ListBox2(inf)
-                        Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "La aplicacion esta utilizando los siguientes recursos" & vbCrLf _
-                        & inf, False, False)
-                    End If
+                    'Comprobamos que el chat sea un grupo para asi separar los mensajes privados de los de grupo
+                    If UCase(bot_updates(0).Message.Chat.Type.ToString) = "GROUP" Then
+                        If UCase(bot_updates(0).Message.Text) = "GRUPO" Then
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
+                            Await bot.SendTextMessageAsync(bot_updates(0).Message.Chat.Id, "Hola al grupo " & bot_updates(0).Message.From.FirstName, False, False)
+                        End If
+                    Else 'Aqui es donde pondremo los comandos para el chat privado
+                        If UCase(bot_updates(0).Message.Text) = "/START" Then
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Bienvenido " & bot_updates(0).Message.From.FirstName, False, False)
+                        End If
+                        If UCase(bot_updates(0).Message.Text) = "HOLA" Then
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
+                        End If
+                        '======== ENVIAR ARCHIVOS ==============
+                        If UCase(bot_updates(0).Message.Text) = "GIF" Then
+                            Dim documento As New Telegram.Bot.Types.FileToSend
+                            With documento
+                                .Filename = "giphy.mp4"
+                                .Content = IO.File.Open("C:\telegrambot\files\giphy.mp4", FileMode.Open, FileAccess.Read, FileShare.Read)
+                            End With
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.UploadVideo)
+                            Await bot.SendDocumentAsync(bot_updates(0).Message.From.Id, documento)
+                        End If
+                        'Verificamos la ram utilizada y disponible de la computadora donde se esta ejecutando la apliacion
+                        If UCase(bot_updates(0).Message.Text) = "PCRAM" Then
+                            Dim CI As New ComputerInfo()
+                            Dim avl, used As String
+                            Dim mem As ULong = ULong.Parse(CI.AvailablePhysicalMemory.ToString())
+                            Dim mem1 As ULong = ULong.Parse(CI.TotalPhysicalMemory.ToString()) - ULong.Parse(CI.AvailablePhysicalMemory.ToString())
+                            avl = (mem / (1024 * 1024) & " MB").ToString()
+                            used = (mem1 / (1024 * 1024) & " MB").ToString()
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Memoria del sistema en uso " & used & vbCrLf _
+                            & "Disponible " & avl, False, False)
+                            SetText_ListBox2("Memoria del sistema en uso " & used & " de " & avl)
+                        End If
+                        'Aqui verificamos la ram utilizada por la aplicacion unicamente
+                        If UCase(bot_updates(0).Message.Text) = "RAM" Then
+                            x = Process.GetCurrentProcess()
+                            inf = "Memoria Utilizada: " & x.WorkingSet64 / 1024 & " K" & vbCrLf _
+                            & "Memoria paginada: " & x.PagedMemorySize64 / 1024 & " K"
+                            SetText_ListBox2(inf)
+                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "La aplicacion esta utilizando los siguientes recursos" & vbCrLf _
+                            & inf, False, False)
+                        End If
 
 #Region "Administracion"
 
-                    If UCase(bot_updates(0).Message.Text) = "CERRAR APP" Then
-                        'comprobamos que dueno del bot haya eso la peticion para evitar que cualquiera cierre el programa
-                        If UCase(bot_updates(0).Message.From.Id.ToString) = OwnerID Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Cerrando Aplicacion ", False, False)
-                            Environment.Exit(0)
-                            Environment.FailFast("")
+                        If UCase(bot_updates(0).Message.Text) = "CERRAR APP" Then
+                            'comprobamos que dueno del bot haya echo la peticion para evitar que cualquiera cierre el programa
+                            If UCase(bot_updates(0).Message.From.Id.ToString) = OwnerID Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Cerrando Aplicacion ", False, False)
+                                Environment.Exit(0)
+                                Environment.FailFast("")
+                            End If
+                        End If
+                        If UCase(bot_updates(0).Message.Text) = "REINICIAR APP" Then
+                            If UCase(bot_updates(0).Message.From.Id.ToString) = OwnerID Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Reiniciando Aplicacion ", False, False)
+                                Application.Restart()
+                            End If
                         End If
                     End If
-                    If UCase(bot_updates(0).Message.Text) = "REINICIAR APP" Then
-                        If UCase(bot_updates(0).Message.From.Id.ToString) = OwnerID Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Reiniciando Aplicacion ", False, False)
-                            Application.Restart()
-                        End If
-                    End If
-                End If
 #End Region
-                'Me.TextBox1.Text = "Esto dará error"
-                ' En lugar de asignar directamente el texto
-                ' llamamos al método SetText para enviar la informacion al textbox1
-                SetText_Lbl_Debug_Info(i)
-                'TextBox1.Text = i
-            Next
-        End If
-        'Aqui hacemos una pequena pausa pero ya no es necesario
-        ' Wait 1 second.
-        ' Thread.Sleep(1000)      
+                    ' llamamos al método SetText para enviar la informacion al label debug
+                    SetText_Lbl_Debug_Info(i)
+                Next
+            End If
+            ' Wait 1 second.
+            Thread.Sleep(1000)
 
-        'Vaciamos esta variables tranto de evitar algunos bugs
-        bot_updates = Nothing
-        Await bot.DeleteWebhookAsync()
+            'Vaciamos esta variables tranto de evitar algunos bugs
+            bot_updates = Nothing
+            Await bot.DeleteWebhookAsync()
+        Catch ex As Exception
+            'tratar de cachar los errores
+            SetText_ListBox2(ex.Message)
+            'damos un pequeno respiro al programa
+            Thread.Sleep(100)
+            Application.ExitThread()
+            Exit Sub
+        End Try
     End Sub
 #End Region
 
@@ -133,10 +137,10 @@ Public Class Form1
     End Sub
     Private Sub BackgroundWorker1_DoWork(sender As Object, e As System.ComponentModel.DoWorkEventArgs) Handles BackgroundWorker1.DoWork
         'Llamamos a un loop constante para asi obtener los updates de telegram y poder responder lo mas rapido posible
-        Call inicia_loop_infinito()
+        Call loop_infinito()
     End Sub
 
-    Private Sub inicia_loop_infinito()
+    Private Sub loop_infinito()
         Dim O As Integer = 0
         While True
             Try
@@ -144,11 +148,8 @@ Public Class Form1
                 Bot_CheckAsync()
                 'Tratamos de limpiar la ram lo mas que podamos 
                 LiberarMemoria()
-                'ya no recuerdo que era esto pero era parte de limpiar ram
-                GC.Collect()
             Catch ex As Exception
                 'tratar de cachar los errores
-                'ListBox2.Items.Add(ex.Message)
                 SetText_ListBox2(ex.Message)
             End Try
         End While
@@ -157,7 +158,7 @@ Public Class Form1
 #End Region
 
 #Region "Pasar texto de un hilo a otro"
-    'Textbox1
+    'Label Debug
     ' Usando delegados y funciones "callback"
     '
     ' Este delegado define un método Sub
@@ -231,7 +232,7 @@ Public Class Form1
 #End Region
 
 #Region "Test"
-
+    'Aqui es para mandar mensajes directamente a un usuario de telegram teniendo su id
     Private Sub Btb_Test_Click(sender As Object, e As EventArgs) Handles Btb_Test.Click
         bot.SendChatActionAsync(Txt_ID_Test.Text, Types.Enums.ChatAction.Typing)
         bot.SendTextMessageAsync(Txt_ID_Test.Text, Txt_Text_Test.Text, False, False)
