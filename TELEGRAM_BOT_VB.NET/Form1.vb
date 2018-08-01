@@ -1,9 +1,11 @@
 ﻿'Imports de sistema
 Imports System.IO
+Imports System.Net
 Imports System.Threading
 Imports Microsoft.VisualBasic.Devices
 'Imports de Telegram bot
 Imports Telegram.Bot
+Imports Telegram.Bot.Types
 Imports Telegram.Bot.Types.InputFiles
 Imports Telegram.Bot.Types.ReplyMarkups
 
@@ -33,105 +35,125 @@ Public Class Form1
                 For i = 0 To bot_updates.Length - 1
                     update_id = bot_updates(i).Id
 
-                    'Obtener info de botones <<<=========================================================== OBTENER INFO BOTONES PROXIMANTE
-                    'If bot_updates(0).CallbackQuery.Data.ToString = "TEXTO PAR COMPARAR Y ACTIVAR" Then
-                    ' Await bot.SendTextMessageAsync("TELEGRAM ID", "Funciona :)")
-                    'End If
+                    'Obtener info de botones  <<<=========================================================== OBTENER INFO BOTONES
+                    If bot_updates(0).Type = Types.Enums.UpdateType.CallbackQuery Then
+                        If bot_updates(0).CallbackQuery.Data.ToString = "Test" Then
+                            Await bot.SendTextMessageAsync(bot_updates(0).CallbackQuery.From.Id, "Funciona :)")
+                            SetText_ListBox2("Se activo funcion del boton")
+                        End If
+                        If bot_updates(0).CallbackQuery.Data.ToString = "Test2" Then
+                            Await bot.SendTextMessageAsync(bot_updates(0).CallbackQuery.From.Id, "Funciona :) 2")
+                            SetText_ListBox2("Se activo funcion del boton")
+                        End If
+                        If bot_updates(0).CallbackQuery.Data.ToString = "Test3" Then
+                            Await bot.SendTextMessageAsync(bot_updates(0).CallbackQuery.From.Id, "Funciona :) 3")
+                            SetText_ListBox2("Se activo funcion del boton")
+                        End If
+                        If bot_updates(0).CallbackQuery.Data.ToString = "Test4" Then
+                            Await bot.SendTextMessageAsync(bot_updates(0).CallbackQuery.From.Id, "Funciona :) 4")
+                            SetText_ListBox2("Se activo funcion del boton")
+                        End If
+                    End If
+
+                    If IsNothing(bot_updates(0).Message) Then
+                        Application.ExitThread()
+                        Exit Sub
+                    End If
 
                     'Aqui revisamos si el mensaje recibido es texto u otro tipo de mensaje
-                    If bot_updates(0).Message.Type.ToString = "TextMessage" Then
+                    If bot_updates(0).Message.Type.ToString = "Text" Then
                         'Aqui por debug obtenermos el id y el nombre de usuario de quien envio el mensaje y lo ponemos en la listbox1
                         SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Text)
-                    Else
-                        SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Type.ToString())
-                    End If
-                    'Comprobamos que el chat sea un grupo para asi separar los mensajes privados de los de grupo
-                    If UCase(bot_updates(0).Message.Chat.Type.ToString) = "GROUP" Then
-                        If UCase(bot_updates(0).Message.Text) = "HOLA" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.Chat.Id, "Hola al grupo " & bot_updates(0).Message.From.FirstName, False, False)
-                        End If
-                    Else 'Aqui es donde pondremo los comandos para el chat privado
-                        If UCase(bot_updates(0).Message.Text) = "/START" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Bienvenido " & bot_updates(0).Message.From.FirstName, False, False)
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "/AYUDA - Muestra este mensaje /HOLA - Comando de pruebas /GIF - Envia una imagen gif de prueba /RAM - Envia informacion sobre la ram utilizada por la app /PCRAM - Envia informacion sobre la RAM del equipo /BOTONES - Muestra Ejemplo del uso de botones", 2, False)
-                        End If
-                        If UCase(bot_updates(0).Message.Text) = "/AYUDA" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "/AYUDA - Muestra este mensaje /HOLA - Comando de pruebas /GIF - Envia una imagen gif de prueba /RAM - Envia informacion sobre la ram utilizada por la app /PCRAM - Envia informacion sobre la RAM del equipo /BOTONES - Muestra Ejemplo del uso de botones", 2, False)
-                        End If
-                        If UCase(bot_updates(0).Message.Text) = "HOLA" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
-                        End If
-                        If UCase(bot_updates(0).Message.Text) = "/HOLA" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
-                        End If
-                        '======== ENVIAR ARCHIVOS ==============
-                        If UCase(bot_updates(0).Message.Text) = "/GIF" Then
-                            Dim documento As InputOnlineFile = New InputOnlineFile(IO.File.Open("giphy.mp4", FileMode.Open, FileAccess.Read, FileShare.Read))
-                            'documento.FileName = "Nombre del archivo"
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.UploadVideo)
-                            Await bot.SendVideoAsync(bot_updates(0).Message.From.Id, documento)
-                        End If
-                        'Verificamos la ram utilizada y disponible de la computadora donde se esta ejecutando la apliacion
-                        If UCase(bot_updates(0).Message.Text) = "/PCRAM" Then
-                            Dim CI As New ComputerInfo()
-                            Dim avl, used As String
-                            Dim mem As ULong = ULong.Parse(CI.AvailablePhysicalMemory.ToString())
-                            Dim mem1 As ULong = ULong.Parse(CI.TotalPhysicalMemory.ToString()) - ULong.Parse(CI.AvailablePhysicalMemory.ToString())
-                            avl = (mem / (1024 * 1024) & " MB").ToString()
-                            used = (mem1 / (1024 * 1024) & " MB").ToString()
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Memoria del sistema en uso " & used & vbCrLf _
-                            & "Disponible " & avl, False, False)
-                            SetText_ListBox2("Memoria del sistema en uso " & used & " de " & avl)
-                        End If
-                        'Aqui verificamos la ram utilizada por la aplicacion unicamente
-                        If UCase(bot_updates(0).Message.Text) = "/RAM" Then
-                            x = Process.GetCurrentProcess()
-                            inf = "Memoria Utilizada: " & x.WorkingSet64 / 1024 & " K" & vbCrLf _
-                            & "Memoria paginada: " & x.PagedMemorySize64 / 1024 & " K"
-                            SetText_ListBox2(inf)
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "La aplicacion esta utilizando los siguientes recursos" & vbCrLf _
-                            & inf, False, False)
-                        End If
-                        'Aqui probamos los botones
-                        If UCase(bot_updates(0).Message.Text) = "/BOTONES" Then
-                            Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                        'Comprobamos que el chat sea un grupo para asi separar los mensajes privados de los de grupo
+                        If UCase(bot_updates(0).Message.Chat.Type.ToString) = "GROUP" Then
+                            If UCase(bot_updates(0).Message.Text) = "HOLA" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.Chat.Id, "Hola al grupo " & bot_updates(0).Message.From.FirstName, False, False)
+                            End If
+                        Else 'Aqui es donde pondremo los comandos para el chat privado
+                            If UCase(bot_updates(0).Message.Text) = "/START" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Bienvenido " & bot_updates(0).Message.From.FirstName, False, False)
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "/AYUDA - Muestra este mensaje /HOLA - Comando de pruebas /GIF - Envia una imagen gif de prueba /RAM - Envia informacion sobre la ram utilizada por la app /PCRAM - Envia informacion sobre la RAM del equipo /BOTONES - Muestra Ejemplo del uso de botones", 2, False)
+                            End If
+                            If UCase(bot_updates(0).Message.Text) = "/AYUDA" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.Chat.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "/AYUDA - Muestra este mensaje /HOLA - Comando de pruebas /GIF - Envia una imagen gif de prueba /RAM - Envia informacion sobre la ram utilizada por la app /PCRAM - Envia informacion sobre la RAM del equipo /BOTONES - Muestra Ejemplo del uso de botones", 2, False)
+                            End If
+                            If UCase(bot_updates(0).Message.Text) = "HOLA" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
+                            End If
+                            If UCase(bot_updates(0).Message.Text) = "/HOLA" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "HOLA " & bot_updates(0).Message.From.FirstName, False, False)
+                            End If
+                            '======== ENVIAR ARCHIVOS ==============
+                            If UCase(bot_updates(0).Message.Text) = "/GIF" Then
+                                Dim documento As InputOnlineFile = New InputOnlineFile(IO.File.Open("giphy.mp4", FileMode.Open, FileAccess.Read, FileShare.Read))
+                                'documento.FileName = "Nombre del archivo"
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.UploadVideo)
+                                Await bot.SendVideoAsync(bot_updates(0).Message.From.Id, documento)
+                            End If
+                            'Verificamos la ram utilizada y disponible de la computadora donde se esta ejecutando la apliacion
+                            If UCase(bot_updates(0).Message.Text) = "/PCRAM" Then
+                                Dim CI As New ComputerInfo()
+                                Dim avl, used As String
+                                Dim mem As ULong = ULong.Parse(CI.AvailablePhysicalMemory.ToString())
+                                Dim mem1 As ULong = ULong.Parse(CI.TotalPhysicalMemory.ToString()) - ULong.Parse(CI.AvailablePhysicalMemory.ToString())
+                                avl = (mem / (1024 * 1024) & " MB").ToString()
+                                used = (mem1 / (1024 * 1024) & " MB").ToString()
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Memoria del sistema en uso " & used & vbCrLf _
+                                & "Disponible " & avl, False, False)
+                                SetText_ListBox2("Memoria del sistema en uso " & used & " de " & avl)
+                            End If
+                            'Aqui verificamos la ram utilizada por la aplicacion unicamente
+                            If UCase(bot_updates(0).Message.Text) = "/RAM" Then
+                                x = Process.GetCurrentProcess()
+                                inf = "Memoria Utilizada: " & x.WorkingSet64 / 1024 & " K" & vbCrLf _
+                                & "Memoria paginada: " & x.PagedMemorySize64 / 1024 & " K"
+                                SetText_ListBox2(inf)
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "La aplicacion esta utilizando los siguientes recursos" & vbCrLf _
+                                & inf, False, False)
+                            End If
+#Region "Creamos Botones"
+                            'Aqui probamos los botones
+                            If UCase(bot_updates(0).Message.Text) = "/BOTONES" Then
+                                Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
 
-                            'Contruimos los botones para despues utilizarlos
-                            Dim bt2 As InlineKeyboardButton = New InlineKeyboardButton With {
-                            .Text = "Test",
-                            .CallbackData = "Test"
-                            }
-                            Dim bt3 As InlineKeyboardButton = New InlineKeyboardButton With {
-                            .Text = "Test 2",
-                            .CallbackData = "test2"
-                            }
-                            'Tambien puede ser en una sola linea al crear los botones
-                            Dim bt4 As InlineKeyboardButton = New InlineKeyboardButton With {.Text = "Test 3", .CallbackData = "test3"}
-                            Dim bt5 As InlineKeyboardButton = New InlineKeyboardButton With {.Text = "Test 4", .CallbackData = "test4"}
+                                'Contruimos los botones para despues utilizarlos
+                                Dim bt2 As InlineKeyboardButton = New InlineKeyboardButton With {
+                                .Text = "Test",
+                                .CallbackData = "Test"
+                                }
+                                Dim bt3 As InlineKeyboardButton = New InlineKeyboardButton With {
+                                .Text = "Test 2",
+                                .CallbackData = "Test2"
+                                }
+                                'Tambien puede ser en una sola linea al crear los botones
+                                Dim bt4 As InlineKeyboardButton = New InlineKeyboardButton With {.Text = "Test 3", .CallbackData = "Test3"}
+                                Dim bt5 As InlineKeyboardButton = New InlineKeyboardButton With {.Text = "Test 4", .CallbackData = "Test4"}
 
-                            'Mostraamos el teclado de esta forma cuando son pocos botones
-                            'Dim teclado As InlineKeyboardMarkup = New InlineKeyboardMarkup({bt2, bt3, bt4, bt5})
+                                'Mostraamos el teclado de esta forma cuando son pocos botones
+                                'Dim teclado As InlineKeyboardMarkup = New InlineKeyboardMarkup({bt2, bt3, bt4, bt5})
 
-                            'Mostraamos el teclado de esta forma cuando son varios botones
-                            Dim teclado As InlineKeyboardMarkup = New InlineKeyboardButton()() {
-                            New InlineKeyboardButton() {bt2},
-                            New InlineKeyboardButton() {bt3, bt4},
-                            New InlineKeyboardButton() {bt2, bt3, bt4, bt5}
-                            }
+                                'Mostraamos el teclado de esta forma cuando son varios botones
+                                Dim teclado As InlineKeyboardMarkup = New InlineKeyboardButton()() {
+                                New InlineKeyboardButton() {bt2},
+                                New InlineKeyboardButton() {bt3, bt4},
+                                New InlineKeyboardButton() {bt2, bt3, bt4, bt5}
+                                }
 
-                            Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Elige un boton pero aun no hacen anda xD " & bot_updates(0).Message.From.FirstName, replyMarkup:=teclado)
-                        End If
+                                Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Elige una opcion " & bot_updates(0).Message.From.FirstName, replyMarkup:=teclado)
+                            End If
+#End Region
+
 #Region "Administracion"
 
-                        If UCase(bot_updates(0).Message.Text) = "CERRAR APP" Then
+                            If UCase(bot_updates(0).Message.Text) = "CERRAR APP" Then
                                 'comprobamos que dueno del bot haya echo la peticion para evitar que cualquiera cierre el programa
                                 If UCase(bot_updates(0).Message.From.Id.ToString) = OwnerID Then
                                     Await bot.SendChatActionAsync(bot_updates(0).Message.From.Id, Types.Enums.ChatAction.Typing)
@@ -149,8 +171,23 @@ Public Class Form1
                             End If
                         End If
 #End Region
-                        ' llamamos al método SetText para enviar la informacion al label debug
-                        SetText_Lbl_Debug_Info(i)
+
+
+#Region "Descargando Archivos"
+                    ElseIf bot_updates(0).Message.Type.ToString = "Document" Then
+                        downloadFile(bot_updates(0).Message)
+                    ElseIf bot_updates(0).Message.Type.ToString = "Video" Then
+                        'downloadFile(bot_updates(0).Message)
+                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Disculpa aun no puedo recibir videos, solo acepto archivos")
+                    ElseIf bot_updates(0).Message.Type.ToString = "Photo" Then
+                        'downloadFile(bot_updates(0).Message)
+                        Await bot.SendTextMessageAsync(bot_updates(0).Message.From.Id, "Disculpa aun no puedo recibir fotos, solo acepto fotos como archivos")
+                    Else
+                        SetText_ListBox1(bot_updates(0).Message.From.Id & " / " & bot_updates(0).Message.From.Username & " / " & bot_updates(0).Message.Type.ToString())
+                    End If
+#End Region
+                    ' llamamos al método SetText para enviar la informacion al label debug
+                    SetText_Lbl_Debug_Info(i)
                 Next
             End If
             ' Wait 1 second.
@@ -305,6 +342,28 @@ Public Class Form1
         End Try
     End Sub
 
+#End Region
+
+#Region "DownloadFiles"
+    Public Async Sub downloadFile(ByVal message As Message)
+        SetText_ListBox1(message.From.Id & " / " & message.From.Username & " / " & message.Type.ToString())
+        Try
+            'Primero obtenemos la informacion del archivo
+            'https://api.telegram.org/bot<token>/getfile?file_id={the file_id of the photo you want to download}
+            Dim file = Await bot.GetFileAsync(message.Document.FileId)
+            'Ahora intentamos descargar
+            'https://api.telegram.org/file/bot<token>/<file_path>
+            Using wc As New WebClient()
+                Dim startupPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                wc.DownloadFile("https://api.telegram.org/file/bot" & Token & "/" & file.FilePath, Path.Combine(startupPath, message.From.Id.ToString & "_" & message.Document.FileName))
+            End Using
+            SetText_ListBox2("Archivo Recibido - " & message.Document.FileName & " From " & message.From.FirstName & " " & message.From.LastName & " ID: " & message.From.Id)
+            Await bot.SendTextMessageAsync(message.From.Id, "Documento recibido")
+        Catch ex As Exception
+            SetText_ListBox2(ex.Message)
+            bot.SendTextMessageAsync(message.From.Id, "Lo siento hubo un error al recibir el archivo")
+        End Try
+    End Sub
 #End Region
 
 End Class
