@@ -28,6 +28,7 @@ Public Class Form1
     Private Async Sub Bot_CheckAsync()
         'Obtenemos los updates del telegram (mensajes nuevos)
         Try
+            'https://api.telegram.org/bot<token>/getUpdates
             Dim bot_updates = bot.GetUpdatesAsync(update_id + 1).Result
             'Comprobamos que haya nuevos mensajes
             If bot_updates.Length > 0 Then
@@ -349,7 +350,7 @@ Public Class Form1
         SetText_ListBox1(message.From.Id & " / " & message.From.Username & " / " & message.Type.ToString())
         Try
             'Primero obtenemos la informacion del archivo
-            'https://api.telegram.org/bot<token>/getfile?file_id={the file_id of the photo you want to download}
+            'https://api.telegram.org/bot<token>/getFile?file_id=<file_id>. file_id of the photo you want to download}
             Dim file = Await bot.GetFileAsync(message.Document.FileId)
             'Ahora intentamos descargar
             'https://api.telegram.org/file/bot<token>/<file_path>
